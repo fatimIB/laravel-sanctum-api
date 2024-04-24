@@ -1,1 +1,1 @@
-"# Auth-sanctum-api" 
+"This app is a secure backend for managing authentication and authorization in web and mobile apps. Built on Laravel, it uses Sanctum for API token authentication, ensuring strong security without added complexity." 
