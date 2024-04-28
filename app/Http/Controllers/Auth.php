@@ -69,4 +69,34 @@ class Auth extends Controller
             'message' => 'Logged out'
         ];
     }
+
+    public function update(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+        $requestData = $request->validate([
+            'firstname' => 'string',
+            'lastname' => 'string',
+            'email' => 'email|unique:users,email,'.$user->id,
+            'address' => 'string',
+            'phone' => 'digits:10|numeric',
+            'password' => 'min:6|regex:/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{6,}$/',
+        ]);
+
+        
+        if (isset($requestData['password'])) {
+            $requestData['password'] = bcrypt($requestData['password']);
+        }
+
+        $user->fill($requestData);
+        $user->save();
+
+        return response()->json(['message' => 'User updated successfully!']);
+    }
+
+    public function destroy($id)
+    {
+        $user = User::findOrFail($id);
+        $user->delete();
+        return response()->json(['message' => 'User deleted successfully!']);
+    }
 }

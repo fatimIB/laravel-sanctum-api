@@ -4,6 +4,11 @@ use App\Http\Controllers\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PasswordResetController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\SaleController;
+use App\Http\Controllers\BalanceController;
+use App\Http\Controllers\PointsController;
+use App\Http\Controllers\WithdrawController;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,6 +24,10 @@ use App\Http\Controllers\PasswordResetController;
 Route::post('/register', [Auth::class, 'register']);
 Route::post('/login', [Auth::class, 'login']);
 
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/users/update/{id}', [Auth::class, 'update']);
+    Route::post('/users/delete/{id}', [Auth::class, 'destroy']);
+});
 
 Route::post('/password/reset/request', [PasswordResetController::class, 'requestReset']);
 Route::post('/password/reset', [PasswordResetController::class, 'resetPassword']);
@@ -27,8 +36,59 @@ Route::middleware('auth:sanctum')->post('/logout', function (Request $request) {
     $authController = new Auth();
     return $authController->logout($request);
 });
-  
-  
+
+Route::prefix('products')->group(function () {
+    Route::get('/', [ProductController::class, 'all']);
+    Route::get('/{id}', [ProductController::class, 'single']);
+    Route::post('/update/{id}', [ProductController::class, 'updateProduct']);
+    Route::post('/new', [ProductController::class, 'newProduct']);
+    Route::post('/delete/{id}', [ProductController::class, 'deleteProduct']);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/users/update/{id}', [Auth::class, 'update']);
+    Route::post('/users/delete/{id}', [Auth::class, 'destroy']);
+});
+
+Route::prefix('sales')->group(function () {
+    Route::get('/', [SaleController::class, 'all']);
+    Route::get('/me', [SaleController::class, 'me']);
+    Route::get('/{id}', [SaleController::class, 'single']);
+    Route::post('/update/{id}', [SaleController::class, 'updateSale']);
+    Route::post('/new', [SaleController::class, 'newSale']);
+    Route::post('/delete/{id}', [SaleController::class, 'deleteSale']);
+});
+
+
+
+Route::prefix('balance')->group(function () {
+    Route::get('/', [BalanceController::class, 'index']); // Endpoint pour récupérer toutes les balances
+    Route::get('/me', [BalanceController::class, 'userBalance']); // Endpoint pour récupérer la balance de l'utilisateur actuel
+    Route::get('/{id}', [BalanceController::class, 'show']); // Endpoint pour récupérer une balance par son ID
+});
+
+
+Route::prefix('points')->group(function () {
+    Route::get('/', [PointsController::class, 'all']);
+    Route::get('/me', [PointsController::class, 'me']);
+    Route::get('/{id}', [PointsController::class, 'single']);
+});
+
+
+Route::prefix('withdraws')->group(function () {
+    Route::get('/', [WithdrawController::class, 'index']); // Endpoint pour récupérer tous les retraits
+    Route::get('/me', [WithdrawController::class, 'userWithdraws']); // Endpoint pour récupérer les retraits de l'utilisateur actuel
+    Route::get('/{id}', [WithdrawController::class, 'show']); // Endpoint pour récupérer un retrait par son ID
+    Route::post('/update/{id}', [WithdrawController::class, 'updateWithdraw']); // Endpoint pour mettre à jour un retrait
+    Route::post('/new', [WithdrawController::class, 'newWithdraw']); // Endpoint pour créer un nouveau retrait
+    Route::post('/delete/{id}', [WithdrawController::class, 'deleteWithdraw']); // Endpoint pour supprimer un retrait
+    Route::post('/balance', [WithdrawController::class, 'balanceWithdraw']); // Endpoint pour vérifier l'équilibre des retraits
+    Route::post('/user-balance-withdraw', [WithdrawController::class, 'userBalanceWithdraw']); // Endpoint pour créer un retrait en fonction de l'utilisateur et de l'équilibre
+    Route::post('/user-points-withdraw', [WithdrawController::class, 'userPointsWithdraw']); // Endpoint pour créer un retrait en fonction de l'utilisateur et des points
+});
+
+
+
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
