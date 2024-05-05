@@ -9,6 +9,7 @@ use App\Http\Controllers\SaleController;
 use App\Http\Controllers\BalanceController;
 use App\Http\Controllers\PointsController;
 use App\Http\Controllers\WithdrawController;
+use App\Http\Controllers\AdminController;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,34 +22,49 @@ use App\Http\Controllers\WithdrawController;
 |
 */
 
-Route::post('/register', [Auth::class, 'register']);
-Route::post('/login', [Auth::class, 'login']);
+// User Routes
+Route::post('user/register', [Auth::class, 'register']);
+Route::post('user/login', [Auth::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/users/update/{id}', [Auth::class, 'update']);
-    Route::post('/users/delete/{id}', [Auth::class, 'destroy']);
+    Route::post('user/logout', [Auth::class, 'logout']);
+    Route::put('user/update/{id}', [Auth::class, 'update']);
+    Route::delete('user/delete/{id}', [Auth::class, 'destroy']);
 });
+
+// Admin Routes
+Route::post('admin/register', [AdminController::class, 'register']);
+Route::post('admin/login', [AdminController::class, 'login']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('admin/logout', [AdminController::class, 'logout']);
+    Route::put('admin/update/{id}', [AdminController::class, 'update']);
+    Route::delete('admin/delete/{id}', [AdminController::class, 'destroy']);
+});
+
 
 Route::post('/password/reset/request', [PasswordResetController::class, 'requestReset']);
 Route::post('/password/reset', [PasswordResetController::class, 'resetPassword']);
 
-Route::middleware('auth:sanctum')->post('/logout', function (Request $request) {
-    $authController = new Auth();
-    return $authController->logout($request);
+
+// Routes for admin
+Route::group(['middleware' => 'admin'], function () {
+    Route::get('/products', [ProductController::class, 'index']);
+    Route::get('/products/{id}', [ProductController::class, 'show']);
 });
 
-Route::prefix('products')->group(function () {
-    Route::get('/', [ProductController::class, 'all']);
-    Route::get('/{id}', [ProductController::class, 'single']);
-    Route::post('/update/{id}', [ProductController::class, 'updateProduct']);
-    Route::post('/new', [ProductController::class, 'newProduct']);
-    Route::post('/delete/{id}', [ProductController::class, 'deleteProduct']);
+// Routes for users
+Route::get('/products', [ProductController::class, 'index']);
+Route::get('/products/search/{name}', [ProductController::class, 'search']);
+
+
+// Routes for admin POST
+Route::group(['middleware' => 'admin'], function () {
+    Route::post('/products', [ProductController::class, 'store']);
+    Route::post('/products/{id}', [ProductController::class, 'update']);
+    Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 });
 
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/users/update/{id}', [Auth::class, 'update']);
-    Route::post('/users/delete/{id}', [Auth::class, 'destroy']);
-});
 
 Route::prefix('sales')->group(function () {
     Route::get('/', [SaleController::class, 'all']);

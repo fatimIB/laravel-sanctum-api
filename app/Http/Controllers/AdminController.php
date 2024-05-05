@@ -4,10 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Hash;
 
-class Auth extends Controller
+class AdminController extends Controller
 {
     public function register(Request $request)
     {
@@ -19,7 +18,7 @@ class Auth extends Controller
             'phone' => 'required|digits:10|numeric',
             'password' => 'required|min:6|regex:/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{6,}$/',
         ]);
-        $fields['role'] = 'user'; 
+        $fields['role'] = 'admin'; // Assigning role as 'admin'
 
         $user = User::create([
             'firstname' => $fields['firstname'],
@@ -28,7 +27,7 @@ class Auth extends Controller
             'address' => $fields['address'],
             'phone' => $fields['phone'],
             'password' => bcrypt($fields['password']),
-            'role' => $fields['role'],
+            'role' => $fields['role'], // Including the role attribute
         ]);
 
         $token = $user->createToken('mytoken')->plainTextToken;
@@ -47,11 +46,11 @@ class Auth extends Controller
             'email' => 'required|email',
             'password' => 'required|min:6|regex:/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{6,}$/',
         ]);
-        $user = User::where('email',$fields['email'])->first();
+        $user = User::where('email', $fields['email'])->first();
 
-        if(!$user || !Hash::check($fields['password'],$user->password)){
+        if (!$user || !Hash::check($fields['password'], $user->password)) {
             return response([
-                'message'=>'wrong creds'
+                'message' => 'Wrong credentials'
             ], 401);
         }
 
@@ -79,13 +78,12 @@ class Auth extends Controller
         $requestData = $request->validate([
             'firstname' => 'string',
             'lastname' => 'string',
-            'email' => 'email|unique:users,email,'.$user->id,
+            'email' => 'email|unique:users,email,' . $user->id,
             'address' => 'string',
             'phone' => 'digits:10|numeric',
             'password' => 'min:6|regex:/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{6,}$/',
         ]);
 
-        
         if (isset($requestData['password'])) {
             $requestData['password'] = bcrypt($requestData['password']);
         }

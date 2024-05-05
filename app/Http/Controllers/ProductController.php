@@ -4,50 +4,100 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ProductController extends Controller
 {
-    public function all()
+    
+    public function __construct()
     {
-        $products = Product::all();
-        return response()->json($products);
+        $this->middleware('auth:sanctum', ['except' => ['index', 'show']]);
+    }
+   /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index()
+    {
+        return Product::all();
     }
 
-    public function single($id)
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
     {
-        $product = Product::find($id);
-        if ($product) {
-            return response()->json($product);
-        } else {
-            return response()->json(['message' => 'Product not found'], 404);
-        }
-    }
+        
+        $request->validate([
+            'name' => 'required',
+            'price' => 'required',
+            'sale_price' => 'required',
+            'code' => 'required'
+        ]);
 
-    public function updateProduct(Request $request, $id)
-    {
-        $product = Product::find($id);
-        if ($product) {
-            $product->update($request->all());
-            return response()->json(['message' => 'Product updated successfully']);
-        } else {
-            return response()->json(['message' => 'Product not found'], 404);
-        }
-    }
-
-    public function newProduct(Request $request)
-    {
         $product = Product::create($request->all());
-        return response()->json(['message' => 'Product created successfully', 'data' => $product], 201);
+        return response()->json(['message' => 'Product created successfully'], 201);
+    
     }
 
-    public function deleteProduct($id)
+    /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function show($id)
+    {
+        return Product::find($id);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, $id)
     {
         $product = Product::find($id);
-        if ($product) {
-            $product->delete();
-            return response()->json(['message' => 'Product deleted successfully']);
-        } else {
-            return response()->json(['message' => 'Product not found'], 404);
-        }
+        $product->update($request->all());
+        return response()->json(['message' => 'Product updated successfully']);
+    
     }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy($id)
+    {
+        $product = Product::destroy($id);
+        return response()->json(['message' => 'Product deleted successfully']);
+    
+    }
+
+     /**
+     * Search for a name
+     *
+     * @param  str  $name
+     * @return \Illuminate\Http\Response
+     */
+    public function search($name)
+    {
+        $products = Product::where('name', 'like', '%'.$name.'%')->get();
+    
+        if ($products->isEmpty()) {
+            return response()->json(['message' => 'Product not found.'], 404);
+        }
+    
+        return $products;
+    }
+    
 }
