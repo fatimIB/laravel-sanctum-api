@@ -13,7 +13,7 @@ class AdminController extends Controller
         $fields = $request->validate([
             'firstname' => 'required|string',
             'lastname' => 'required|string',
-            'email' => 'required|email|unique:users,email',
+            'email' => 'required|email|unique:users',
             'address' => 'required|string',
             'phone' => 'required|digits:10|numeric',
             'password' => 'required|min:6|regex:/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{6,}$/',

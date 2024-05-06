@@ -44,6 +44,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 Route::post('/password/reset/request', [PasswordResetController::class, 'requestReset']);
+Route::post('/password/reset/verify', [PasswordResetController::class, 'verifyCodeAndEmail']);
 Route::post('/password/reset', [PasswordResetController::class, 'resetPassword']);
 
 

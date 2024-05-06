@@ -34,18 +34,16 @@ class PasswordResetController extends Controller
         return response()->json(['message' => 'Verification code sent to your email'], 200);
     }
 
-    // Method to reset the password
-    public function resetPassword(Request $request)
+    // Method to verify the code and email
+    public function verifyCodeAndEmail(Request $request)
     {
         $request->validate([
             'email' => 'required|email|exists:users,email',
             'code' => 'required|digits:4',
-            'password' => 'required|min:6',
         ]);
 
         $email = $request->email;
         $code = $request->code;
-        $password = $request->password;
 
         // Check if the code is valid
         $token = PasswordResetToken::where('email', $email)
@@ -56,16 +54,32 @@ class PasswordResetController extends Controller
             return response()->json(['error' => 'Invalid verification code'], 400);
         }
 
+        // Code is valid, proceed
+        return response()->json(['message' => 'Verification successful'], 200);
+    }
+
+    // Method to reset the password
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|exists:users,email',
+            'password' => 'required|min:6',
+        ]);
+
+        $email = $request->email;
+        $password = $request->password;
+
         // Update the user's password
         $user = User::where('email', $email)->first();
         $user->password = Hash::make($password);
         $user->save();
 
         // Delete the token from the database
-        $token->delete();
+        PasswordResetToken::where('email', $email)->delete();
 
         return response()->json(['message' => 'Password reset successfully'], 200);
     }
+
 
     // Method to send reset code email
     private function sendResetCodeEmail($email, $code)
