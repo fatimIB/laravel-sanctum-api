@@ -14,8 +14,9 @@ return new class extends Migration
         Schema::create('sales', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
-            $table->json('products');
-            $table->json('quantity');
+            $table->string('products',288);
+            $table->string('products',288);
+            $table->decimal('total_price', 10, 2)->change();
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');

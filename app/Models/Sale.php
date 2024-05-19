@@ -12,12 +12,13 @@ class Sale extends Model
     protected $fillable = [
         'user_id',
         'products',
-        'quantity',
+        'user_name',
+        'total_price',
     ];
 
     protected $casts = [
-        'products' => 'array',
-        'quantity' => 'array',
+        'products' => 'string',
+        'user_name'=> 'string',
     ];
 
 }

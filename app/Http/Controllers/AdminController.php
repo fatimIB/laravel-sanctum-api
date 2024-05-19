@@ -100,4 +100,37 @@ class AdminController extends Controller
         $user->delete();
         return response()->json(['message' => 'User deleted successfully!']);
     }
+
+    public function getUsers()
+    {
+
+        $users = User::where('role', 'user')->get();
+
+        return response()->json($users);
+    }
+
+    public function updateUser(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+
+        $requestData = $request->validate([
+            'firstname' => 'string',
+            'lastname' => 'string',
+            'email' => 'email|unique:users,email,' . $user->id,
+            'phone' => 'digits:10|numeric',
+        ]);
+
+        // Update the user with the validated data
+        $user->update($requestData);
+
+        return response()->json(['message' => 'User updated successfully!']);
+    }
+
+    public function deleteUser($id)
+    {
+        $user = User::findOrFail($id);
+        $user->delete();
+
+        return response()->json(['message' => 'User deleted successfully']);
+    }
 }

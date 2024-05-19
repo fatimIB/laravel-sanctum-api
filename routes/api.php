@@ -37,6 +37,9 @@ Route::post('admin/register', [AdminController::class, 'register']);
 Route::post('admin/login', [AdminController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/admin/users', [AdminController::class, 'getUsers']);
+    Route::put('/admin/users/{id}', [AdminController::class, 'updateUser']);
+    Route::delete('/admin/users/{id}', [AdminController::class, 'deleteUser']);
     Route::post('admin/logout', [AdminController::class, 'logout']);
     Route::put('admin/update/{id}', [AdminController::class, 'update']);
     Route::delete('admin/delete/{id}', [AdminController::class, 'destroy']);
@@ -66,14 +69,20 @@ Route::group(['middleware' => 'admin'], function () {
     Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 });
 
-
-Route::prefix('sales')->group(function () {
-    Route::get('/', [SaleController::class, 'all']);
-    Route::get('/me', [SaleController::class, 'me']);
-    Route::get('/{id}', [SaleController::class, 'single']);
-    Route::post('/update/{id}', [SaleController::class, 'updateSale']);
-    Route::post('/new', [SaleController::class, 'newSale']);
-    Route::post('/delete/{id}', [SaleController::class, 'deleteSale']);
+Route::get('/points/{userId}', [PointsController::class, 'getUserPoints']);
+Route::get('/sales/total/{userId}', [SaleController::class, 'calculateTotalSales']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::prefix('sales')->group(function () {
+        Route::get('/', [SaleController::class, 'all']);
+        Route::get('/me', [SaleController::class, 'me']);
+        Route::get('/{id}', [SaleController::class, 'single']);
+        
+        Route::middleware('admin')->group(function () {
+            Route::post('/update/{id}', [SaleController::class, 'updateSale']);
+            Route::post('/new', [SaleController::class, 'newSale']);
+            Route::delete('/{id}', [SaleController::class, 'deleteSale']);
+        });
+    });
 });
 
 
@@ -89,6 +98,7 @@ Route::prefix('points')->group(function () {
     Route::get('/', [PointsController::class, 'all']);
     Route::get('/me', [PointsController::class, 'me']);
     Route::get('/{id}', [PointsController::class, 'single']);
+    Route::post('/store', [PointsController::class, 'storePoints']);
 });
 
 
