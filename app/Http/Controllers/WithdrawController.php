@@ -2,82 +2,64 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Withdraw;
 use Illuminate\Http\Request;
+use App\Models\Balance;
+use App\Models\Withdraw;
+use Illuminate\Support\Facades\Auth;
 
 class WithdrawController extends Controller
 {
-    public function index()
+    public function requestWithdraw(Request $request)
     {
-        $withdraws = Withdraw::all();
+        // Validate the request data
+        $request->validate([
+            'amount' => 'required|numeric|min:0',
+            'method' => 'required|in:bank_transfer,paypal', // Add more payment methods as needed
+        ]);
+
+        // Get the authenticated user's ID
+        $userId = Auth::id();
+
+        // Create a withdrawal request
+        $withdraw = new Withdraw([
+            'user_id' => $userId,
+            'amount' => $request->amount,
+            'method' => $request->method,
+            'status' => 'pending', // Default status is pending
+        ]);
+        $withdraw->save();
+
+        return response()->json(['message' => 'Withdrawal request submitted successfully']);
+    }
+
+    public function getAllWithdraws()
+    {
+        $withdraws = Withdraw::with('user')->get();
         return response()->json($withdraws);
     }
 
-    public function show($id)
+    public function updateWithdrawStatus(Request $request, $id)
     {
+        $request->validate(['status' => 'required|in:pending,paid,rejected']);
+    
         $withdraw = Withdraw::findOrFail($id);
-        return response()->json($withdraw);
-    }
-
-    public function updateWithdraw(Request $request, $id)
-    {
-        $withdraw = Withdraw::findOrFail($id);
-
-        $request->validate([
-            'method' => 'required|string',
-            'points' => 'required|integer|min:10',
-            'status' => 'required|string|in:pending,paid,rejected'
-        ]);
-
-        $withdraw->update([
-            'method' => $request->method,
-            'points' => $request->points,
-            'status' => $request->status
-        ]);
-
-        return response()->json($withdraw);
-    }
-
-    public function newWithdraw(Request $request)
-    {
-        $request->validate([
-            'method' => 'required|string',
-            'points' => 'required|integer|min:10'
-        ]);
-
-        $withdraw = Withdraw::create([
-            'method' => $request->method,
-            'points' => $request->points,
-            'status' => 'pending' // Par défaut, le statut est "pending" pour une nouvelle demande
-        ]);
-
-        return response()->json($withdraw, 201);
-    }
-
-    public function deleteWithdraw($id)
-    {
-        $withdraw = Withdraw::findOrFail($id);
-        $withdraw->delete();
-        return response()->json(['message' => 'Retrait supprimé avec succès']);
-    }
-
-    public function balanceWithdraw(Request $request)
-    {
-        // Logique pour vérifier l'équilibre des retraits
-    }
-
-    public function userBalanceWithdraw(Request $request)
-    {
-        // Logique pour créer un retrait en fonction de l'utilisateur et de l'équilibre
-    }
-
-    public function userPointsWithdraw(Request $request)
-    {
-        // Logique pour créer un retrait en fonction de l'utilisateur et des points
-    }
-
-    public function userWithdraws()
-    {
-        // Logique pour récupérer les retraits de l'utilisateur actuel
+        $oldStatus = $withdraw->status;
+        $withdraw->status = $request->status;
+        $withdraw->save();
+    
+        if ($request->status === 'paid' && $oldStatus !== 'paid') {
+            // Deduct the amount from the user's balance if the status is changed to 'paid'
+            $balance = Balance::where('user_id', $withdraw->user_id)->first();
+    
+            if (!$balance) {
+                return response()->json(['error' => 'User balance not found'], 404);
+            }
+    
+            // Update the user's balance
+            $balance->amount -= $withdraw->amount;
+            $balance->save();
+        }
+    
+        return response()->json(['status' => $withdraw->status]);
     }
 }

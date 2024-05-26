@@ -3,23 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Models\Points;
-use App\Models\Sale;
 use App\Models\User;
 use Illuminate\Http\Request;
 
 class PointsController extends Controller
 {
-
     public function all()
     {
-        $points = Points::all();
+        $points = Points::with('user')->get();
         return response()->json($points);
     }
 
     public function me()
     {
         $userId = auth()->user()->id;
-        $userPoints = Points::where('user_id', $userId)->get();
+        $userPoints = Points::where('user_id', $userId)->with('user')->get();
         return response()->json($userPoints);
     }
 
@@ -32,42 +30,78 @@ class PointsController extends Controller
 
         $totalPoints = $this->calculateUserPoints($id);
 
-        $userPoints = Points::where('user_id', $id)->get();
+        $userPoints = Points::where('user_id', $id)->with('user')->get();
         return response()->json([
             'total_points' => $totalPoints,
             'points_history' => $userPoints
         ]);
     }
 
-
     public static function updatePoints($userId, $totalPrice)
     {
-        // Calculate the number of points earned based on $50 increments
-        $points = intval($totalPrice / 50) * 100;
-
-        $userPoints = Points::where('user_id', $userId)->first();
+        $pointsEarned = intval($totalPrice / 50) * 100;
+        $userPoints = Points::where('user_id', $userId)->orderBy('created_at', 'desc')->first();
 
         if ($userPoints) {
-            // Update points for existing user
-            $userPoints->amount += $points; // Add the new points to the existing points
-            $userPoints->save();
+            $totalAmount = $userPoints->amount + $pointsEarned;
+            if ($totalAmount > 5000) {
+                $remainingPoints = $totalAmount - 5000;
+                $userPoints->amount = 5000;
+                $userPoints->save();
+
+                Points::create([
+                    'user_id' => $userId,
+                    'amount' => $remainingPoints,
+                    'status' => 'active',
+                ]);
+            } else {
+                $userPoints->amount += $pointsEarned;
+                $userPoints->save();
+            }
         } else {
-            // Create points for new user
             Points::create([
                 'user_id' => $userId,
-                'amount' => $points,
+                'amount' => $pointsEarned,
                 'status' => 'active',
             ]);
         }
     }
-    public function getUserPoints($userId)
-{
-    $userPoints = Points::where('user_id', $userId)->first();
 
-    if (!$userPoints) {
-        return response()->json(['amount' => 0]); // Return 0 points as response
+    public function getUserPoints($userId)
+    {
+        $activePoints = Points::where('user_id', $userId)
+            ->where('status', 'active')
+            ->with('user')
+            ->get();
+
+        if ($activePoints->isEmpty()) {
+            return response()->json([
+                'total_points' => 0,
+                'points_history' => [],
+            ]);
+        }
+
+        $totalPoints = $activePoints->sum('amount');
+
+        return response()->json([
+            'total_points' => $totalPoints,
+            'points_history' => $activePoints,
+        ]);
     }
 
-    return response()->json($userPoints);
-}
+
+    public function updateStatus($id, Request $request)
+    {
+        $point = Points::find($id);
+    
+        if (!$point) {
+            return response()->json(['error' => 'Point not found'], 404);
+        }
+    
+        $point->status = $request->input('status', $point->status);
+        $point->save();
+    
+        return response()->json(['status' => $point->status]);
+    }
+    
 }

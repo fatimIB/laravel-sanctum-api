@@ -10,6 +10,11 @@ class Points extends Model
     use HasFactory;
     
     protected $fillable = [
-        'user_id', 'amount','status',
+        'user_id', 'amount', 'status',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

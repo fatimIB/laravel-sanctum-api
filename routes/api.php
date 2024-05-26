@@ -70,7 +70,14 @@ Route::group(['middleware' => 'admin'], function () {
 });
 
 Route::get('/points/{userId}', [PointsController::class, 'getUserPoints']);
+Route::get('/points', [PointsController::class, 'all']);
+Route::middleware(['auth:sanctum', 'admin'])->group(function () {
+    Route::put('/points/{id}', [PointsController::class, 'updateStatus']);
+});
+
+
 Route::get('/sales/total/{userId}', [SaleController::class, 'calculateTotalSales']);
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('sales')->group(function () {
         Route::get('/', [SaleController::class, 'all']);
@@ -87,21 +94,21 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
 
-Route::prefix('balance')->group(function () {
-    Route::get('/', [BalanceController::class, 'index']); // Endpoint pour récupérer toutes les balances
-    Route::get('/me', [BalanceController::class, 'userBalance']); // Endpoint pour récupérer la balance de l'utilisateur actuel
-    Route::get('/{id}', [BalanceController::class, 'show']); // Endpoint pour récupérer une balance par son ID
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/balance', [BalanceController::class, 'userBalance']);
+    Route::get('/balance/{id}', [BalanceController::class, 'show']);
+    Route::put('/balance/update/{userId}', [BalanceController::class, 'updateBalance']);
 });
 
-
-Route::prefix('points')->group(function () {
-    Route::get('/', [PointsController::class, 'all']);
-    Route::get('/me', [PointsController::class, 'me']);
-    Route::get('/{id}', [PointsController::class, 'single']);
-    Route::post('/store', [PointsController::class, 'storePoints']);
+Route::middleware(['auth:sanctum', 'user'])->group(function () {
+    Route::post('/withdraws/new', [WithdrawController::class, 'requestWithdraw']);
+});
+Route::middleware(['auth:sanctum', 'admin'])->group(function () {
+    Route::get('/withdraws/all', [WithdrawController::class, 'getAllWithdraws']);
+    Route::put('/withdraws/{id}', [WithdrawController::class, 'updateWithdrawStatus']);
 });
 
-
+/*
 Route::prefix('withdraws')->group(function () {
     Route::get('/', [WithdrawController::class, 'index']); // Endpoint pour récupérer tous les retraits
     Route::get('/me', [WithdrawController::class, 'userWithdraws']); // Endpoint pour récupérer les retraits de l'utilisateur actuel
@@ -113,7 +120,7 @@ Route::prefix('withdraws')->group(function () {
     Route::post('/user-balance-withdraw', [WithdrawController::class, 'userBalanceWithdraw']); // Endpoint pour créer un retrait en fonction de l'utilisateur et de l'équilibre
     Route::post('/user-points-withdraw', [WithdrawController::class, 'userPointsWithdraw']); // Endpoint pour créer un retrait en fonction de l'utilisateur et des points
 });
-
+*/
 
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {

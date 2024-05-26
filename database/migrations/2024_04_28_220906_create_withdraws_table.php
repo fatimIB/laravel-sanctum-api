@@ -16,7 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('user_id');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->string('method');
-            $table->integer('points');
+            $table->decimal('amount', 10, 2); 
             $table->enum('status', ['pending', 'paid', 'rejected']);
             $table->timestamps();
         });

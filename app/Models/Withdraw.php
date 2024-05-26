@@ -9,8 +9,13 @@ class Withdraw extends Model
 {
     use HasFactory;
     protected $fillable = [
-        'user_id', 'method', 'points', 'status'
+        'user_id', 'method', 'amount', 'status'
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
    
 }

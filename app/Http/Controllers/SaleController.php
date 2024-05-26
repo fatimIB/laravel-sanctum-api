@@ -6,6 +6,7 @@ use App\Models\Sale;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use App\Http\Controllers\PointsController;
+use App\Http\Controllers\BalanceController;
 use Illuminate\Support\Facades\Log;
 
 class SaleController extends Controller
@@ -61,17 +62,21 @@ class SaleController extends Controller
                 }
             }
 
+            $newTotalPrice = $validatedData['total_price'];
+            $commission = $newTotalPrice * 0.30; 
+
             $sale->update([
                 'user_id' => $validatedData['user_id'],
                 'user_name' => $validatedData['user_name'],
                 'products' => implode(',', $productNames),
-                'total_price' => $validatedData['total_price'],
+                'total_price' => $newTotalPrice,
+                'commission' => $commission, 
             ]);
 
-            // Calculate difference in total price and update points accordingly
-            $newTotalPrice = $validatedData['total_price'];
+            // Update the user's points and balance
             $priceDifference = $newTotalPrice - $oldTotalPrice;
             PointsController::updatePoints($userId, $priceDifference);
+            $this->updateUserBalance($userId);
 
             return response()->json(['message' => 'Sale updated successfully', 'sale' => $sale]);
         } else {
@@ -98,16 +103,21 @@ class SaleController extends Controller
             }
         }
 
+        $totalPrice = $validatedData['total_price'];
+        $commission = $totalPrice * 0.30; 
+
         // Create new sale record
         $sale = Sale::create([
             'user_id' => $validatedData['user_id'],
             'user_name' => $validatedData['user_name'],
             'products' => implode(',', $productNames),
-            'total_price' => $validatedData['total_price'],
+            'total_price' => $totalPrice,
+            'commission' => $commission, 
         ]);
 
+        // Update points and balance for the user
         PointsController::updatePoints($sale->user_id, $sale->total_price);
-
+        $this->updateUserBalance($sale->user_id);
 
         return response()->json(['message' => 'New sale created successfully', 'sale' => $sale], 201);
     }
@@ -120,12 +130,20 @@ class SaleController extends Controller
             $totalPrice = $sale->total_price;
             $sale->delete();
 
-            // Subtract points earned from the deleted sale
+            // Subtract points earned from the deleted sale and update the balance
             PointsController::updatePoints($userId, -$totalPrice);
+            $this->updateUserBalance($userId);
+
             return response()->json(['message' => 'Sale deleted successfully']);
         } else {
             return response()->json(['message' => 'Sale not found'], 404);
         }
+    }
+
+    private function updateUserBalance($userId)
+    {
+        $balanceController = new BalanceController();
+        $balanceController->updateBalance($userId);
     }
 
     public function calculateTotalSales($userId)

@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->string('products',288);
-            $table->string('products',288);
             $table->decimal('total_price', 10, 2)->change();
+            $table->decimal('commission', 10, 2)->change();
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');

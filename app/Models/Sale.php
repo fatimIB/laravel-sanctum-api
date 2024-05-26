@@ -14,6 +14,7 @@ class Sale extends Model
         'products',
         'user_name',
         'total_price',
+        'commission',
     ];
 
     protected $casts = [
