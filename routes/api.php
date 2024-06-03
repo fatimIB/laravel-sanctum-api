@@ -10,6 +10,7 @@ use App\Http\Controllers\BalanceController;
 use App\Http\Controllers\PointsController;
 use App\Http\Controllers\WithdrawController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\StatisticsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,14 +23,24 @@ use App\Http\Controllers\AdminController;
 |
 */
 
+Route::get('/statistics/product-of-the-month', [StatisticsController::class, 'productOfTheMonth']);
+Route::get('/statistics/total-sales-today', [StatisticsController::class, 'totalSalesToday']);
+Route::get('/statistics/number-of-users', [StatisticsController::class, 'numberOfUsers']);
+Route::get('/statistics/profit-today', [StatisticsController::class, 'profitToday']);
+Route::get('/statistics/monthly-sales-data', [StatisticsController::class, 'monthlySalesData']);
+
 // User Routes
 Route::post('user/register', [Auth::class, 'register']);
 Route::post('user/login', [Auth::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('user/logout', [Auth::class, 'logout']);
-    Route::put('user/update/{id}', [Auth::class, 'update']);
+    Route::put('user/profile', [Auth::class, 'updateProfile']);
+    Route::get('user/profile', [Auth::class, 'getProfile']); 
     Route::delete('user/delete/{id}', [Auth::class, 'destroy']);
+    Route::post('/check-password', [Auth::class, 'checkPassword']);
+    Route::post('/user/change-password', [Auth::class, 'changePassword']);
+
 });
 
 // Admin Routes
@@ -74,14 +85,17 @@ Route::get('/points', [PointsController::class, 'all']);
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::put('/points/{id}', [PointsController::class, 'updateStatus']);
 });
-
+Route::middleware('auth:sanctum')->get('/user/points', [PointsController::class, 'UserPoints']);
 
 Route::get('/sales/total/{userId}', [SaleController::class, 'calculateTotalSales']);
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/sales/me', [SaleController::class, 'mySales']);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('sales')->group(function () {
         Route::get('/', [SaleController::class, 'all']);
-        Route::get('/me', [SaleController::class, 'me']);
         Route::get('/{id}', [SaleController::class, 'single']);
         
         Route::middleware('admin')->group(function () {
@@ -103,6 +117,11 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware(['auth:sanctum', 'user'])->group(function () {
     Route::post('/withdraws/new', [WithdrawController::class, 'requestWithdraw']);
 });
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/withdraws/userWithdrawals', [WithdrawController::class, 'getUserWithdrawals']);
+});
+
+
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::get('/withdraws/all', [WithdrawController::class, 'getAllWithdraws']);
     Route::put('/withdraws/{id}', [WithdrawController::class, 'updateWithdrawStatus']);

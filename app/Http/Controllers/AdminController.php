@@ -54,6 +54,10 @@ class AdminController extends Controller
             ], 401);
         }
 
+        if ($user->role === 'user') {
+            return response()->json(['message' => 'users are not allowed to log in to this app'], 403);
+        }
+
         $token = $user->createToken('mytoken')->plainTextToken;
 
         $response = [

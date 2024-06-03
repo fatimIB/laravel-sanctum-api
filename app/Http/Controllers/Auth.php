@@ -19,7 +19,7 @@ class Auth extends Controller
             'phone' => 'required|digits:10|numeric',
             'password' => 'required|min:6|regex:/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{6,}$/',
         ]);
-        $fields['role'] = 'user'; 
+        $fields['role'] = 'user';
 
         $user = User::create([
             'firstname' => $fields['firstname'],
@@ -47,12 +47,16 @@ class Auth extends Controller
             'email' => 'required|email',
             'password' => 'required|min:6|regex:/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{6,}$/',
         ]);
-        $user = User::where('email',$fields['email'])->first();
+        $user = User::where('email', $fields['email'])->first();
 
-        if(!$user || !Hash::check($fields['password'],$user->password)){
+        if (!$user || !Hash::check($fields['password'], $user->password)) {
             return response([
-                'message'=>'wrong creds'
+                'message' => 'wrong creds'
             ], 401);
+        }
+
+        if ($user->role === 'admin') {
+            return response()->json(['message' => 'Admins are not allowed to log in to this app'], 403);
         }
 
         $token = $user->createToken('mytoken')->plainTextToken;
@@ -73,19 +77,19 @@ class Auth extends Controller
         ];
     }
 
-    public function update(Request $request, $id)
+    public function updateProfile(Request $request)
     {
-        $user = User::findOrFail($id);
+        $user = $request->user(); // Récupérer l'utilisateur authentifié
+
         $requestData = $request->validate([
             'firstname' => 'string',
             'lastname' => 'string',
-            'email' => 'email|unique:users,email,'.$user->id,
+            'email' => 'email|unique:users,email,' . $user->id,
             'address' => 'string',
             'phone' => 'digits:10|numeric',
             'password' => 'min:6|regex:/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{6,}$/',
         ]);
 
-        
         if (isset($requestData['password'])) {
             $requestData['password'] = bcrypt($requestData['password']);
         }
@@ -93,7 +97,13 @@ class Auth extends Controller
         $user->fill($requestData);
         $user->save();
 
-        return response()->json(['message' => 'User updated successfully!']);
+        return response()->json(['message' => 'User profile updated successfully!']);
+    }
+
+    public function getProfile(Request $request)
+    {
+        $user = $request->user();
+        return response()->json($user);
     }
 
     public function destroy($id)
@@ -101,5 +111,32 @@ class Auth extends Controller
         $user = User::findOrFail($id);
         $user->delete();
         return response()->json(['message' => 'User deleted successfully!']);
+    }
+    public function checkPassword(Request $request)
+    {
+        $user = $request->user(); // Get the authenticated user
+
+        $request->validate([
+            'password' => 'required|min:6|regex:/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{6,}$/',
+        ]);
+
+        if (Hash::check($request->password, $user->password)) {
+            return response()->json(['message' => 'Password is correct'], 200);
+        } else {
+            return response()->json(['message' => 'Password is incorrect'], 400);
+        }
+    }
+    public function changePassword(Request $request)
+    {
+        $user = $request->user(); // Get the authenticated user
+
+        $request->validate([
+            'password' => 'required|min:6|regex:/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{6,}$/',
+        ]);
+
+        $user->password = bcrypt($request->password);
+        $user->save();
+
+        return response()->json(['message' => 'Password changed successfully!']);
     }
 }

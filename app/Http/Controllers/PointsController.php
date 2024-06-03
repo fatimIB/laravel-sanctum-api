@@ -103,5 +103,27 @@ class PointsController extends Controller
     
         return response()->json(['status' => $point->status]);
     }
+
+    public function UserPoints()
+    {
+        $user = auth()->user();
+        $userId = $user->id;
+
+        $userPoints = Points::where('user_id', $userId)->get();
+
+        if ($userPoints->isEmpty()) {
+            return response()->json([
+                'message' => 'User points not found',
+                'user_id' => $userId,
+                'points' => [],
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'User points found',
+            'user_id' => $userId,
+            'points' => $userPoints,
+        ]);
+    }
     
 }

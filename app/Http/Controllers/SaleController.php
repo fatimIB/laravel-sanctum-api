@@ -153,4 +153,15 @@ class SaleController extends Controller
 
         return $totalSales;
     }
+
+    public function mySales()
+    {
+        $user = auth()->user();
+        if ($user) {
+            $sales = Sale::where('user_id', $user->id)->get();
+            return response()->json($sales);
+        } else {
+            return response()->json(['message' => 'User not authenticated'], 401);
+        }
+    }
 }

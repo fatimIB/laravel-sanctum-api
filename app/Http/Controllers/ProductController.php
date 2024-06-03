@@ -34,7 +34,7 @@ class ProductController extends Controller
         $request->validate([
             'name' => 'required',
             'price' => 'required',
-            'code' => 'required'
+            'code' => 'required|unique'
         ]);
 
         $product = Product::create($request->all());

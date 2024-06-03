@@ -62,4 +62,15 @@ class WithdrawController extends Controller
     
         return response()->json(['status' => $withdraw->status]);
     }
+    public function getUserWithdrawals()
+    {
+        // Get the authenticated user's ID
+        $userId = auth()->id();
+
+        // Retrieve all withdrawals made by the authenticated user
+        $withdrawals = Withdraw::where('user_id', $userId)->get();
+
+        return response()->json($withdrawals);
+    }
+
 }
